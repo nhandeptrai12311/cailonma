@@ -60,17 +60,31 @@ local function findTyrant()
     return nil
 end
 
--- Theo dõi liên tục
+-- Theo dõi liên tục và bay tới Tyrant
 task.spawn(function()
     while true do
         if following and humanoid and character:FindFirstChild("HumanoidRootPart") then
             tyrant = tyrant or findTyrant()
-            if tyrant then
-                local dist = (tyrant.Position - character.HumanoidRootPart.Position).Magnitude
-                if dist > 10 then
-                    humanoid:MoveTo(tyrant.Position)
-                else
-                    humanoid:MoveTo(character.HumanoidRootPart.Position)
+            
+            -- Nếu Tyrant không còn tồn tại, dừng bay
+            if not tyrant then
+                if character:FindFirstChild("BodyVelocity") then
+                    character.BodyVelocity:Destroy()
+                end
+                break -- Dừng vòng lặp nếu Tyrant không còn
+            end
+            
+            local dist = (tyrant.Position - character.HumanoidRootPart.Position).Magnitude
+            if dist > 10 then
+                -- Cho nhân vật bay tới Tyrant
+                local bodyVelocity = character:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000) -- Giới hạn lực để bay
+                bodyVelocity.Velocity = (tyrant.Position - character.HumanoidRootPart.Position).Unit * 50 -- Tốc độ bay
+                bodyVelocity.Parent = character.HumanoidRootPart
+            else
+                -- Dừng bay khi gần Tyrant
+                if character:FindFirstChild("BodyVelocity") then
+                    character.BodyVelocity:Destroy()
                 end
             end
         end
