@@ -1,0 +1,86 @@
+-- GUI đẹp
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+local title = Instance.new("TextLabel", frame)
+local toggle = Instance.new("TextButton", frame)
+
+gui.Name = "BloxFruitTyrantFollow"
+
+frame.Size = UDim2.new(0, 180, 0, 100)
+frame.Position = UDim2.new(0, 20, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+title.Text = "Tyrant Auto-Follow"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+Instance.new("UICorner", title).CornerRadius = UDim.new(0, 12)
+title.Parent = frame
+
+toggle.Size = UDim2.new(0.8, 0, 0, 40)
+toggle.Position = UDim2.new(0.1, 0, 0, 50)
+toggle.Text = "Follow: OFF"
+toggle.TextSize = 18
+toggle.Font = Enum.Font.Gotham
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 10)
+toggle.Parent = frame
+
+-- Biến
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local following = false
+local tyrant = nil
+
+-- Cập nhật lại nhân vật khi chết
+player.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+end)
+
+-- Tìm Tyrant trong Blox Fruit (thường ở workspace.Enemies)
+local function findTyrant()
+    local enemies = workspace:FindFirstChild("Enemies")
+    if enemies then
+        for _, v in pairs(enemies:GetChildren()) do
+            if v:IsA("Model") and v.Name == "Tyrant of the Skies" and v:FindFirstChild("HumanoidRootPart") then
+                return v.HumanoidRootPart
+            end
+        end
+    end
+    return nil
+end
+
+-- Theo dõi liên tục
+task.spawn(function()
+    while true do
+        if following and humanoid and character:FindFirstChild("HumanoidRootPart") then
+            tyrant = tyrant or findTyrant()
+            if tyrant then
+                local dist = (tyrant.Position - character.HumanoidRootPart.Position).Magnitude
+                if dist > 10 then
+                    humanoid:MoveTo(tyrant.Position)
+                else
+                    humanoid:MoveTo(character.HumanoidRootPart.Position)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- Nút bật tắt
+toggle.MouseButton1Click:Connect(function()
+    following = not following
+    toggle.Text = following and "Follow: ON" or "Follow: OFF"
+    toggle.BackgroundColor3 = following and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(80, 80, 80)
+end)
